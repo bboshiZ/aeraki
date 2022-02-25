@@ -17,9 +17,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/aeraki-mesh/aeraki/lazyxds/pkg/controller/discoveryselector"
 	"k8s.io/apimachinery/pkg/labels"
-	"sync"
 
 	"github.com/aeraki-mesh/aeraki/lazyxds/cmd/lazyxds/app/config"
 	"github.com/aeraki-mesh/aeraki/lazyxds/pkg/controller/endpoints"
@@ -44,7 +45,8 @@ const (
 	// EgressGatewayFullName ...
 	EgressGatewayFullName = config.IstioNamespace + "/" + config.EgressGatewayName
 	// ServiceAddressKey ...
-	ServiceAddressKey = "lazyxds-service-address"
+	// ServiceAddressKey = "lazyxds-service-address"
+	ServiceAddressKey = "Slime-Orig-Dest"
 )
 
 // AggregationController ...
@@ -100,27 +102,27 @@ func NewController(istioClient *istioclient.Clientset, kubeClient *kubernetes.Cl
 		c.deleteVirtualService,
 	)
 
-	c.sidecarController = sidecar.NewController(
-		c.istioInformer.Networking().V1alpha3().Sidecars(),
-		c.syncSidecar,
-		c.deleteSidecar,
-	)
+	// c.sidecarController = sidecar.NewController(
+	// 	c.istioInformer.Networking().V1alpha3().Sidecars(),
+	// 	c.syncSidecar,
+	// 	c.deleteSidecar,
+	// )
 
-	c.serviceEntryController = serviceentry.NewController(
-		c.istioInformer.Networking().V1alpha3().ServiceEntries(),
-		c.syncServiceEntry,
-		c.deleteServiceEntry,
-	)
+	// c.serviceEntryController = serviceentry.NewController(
+	// 	c.istioInformer.Networking().V1alpha3().ServiceEntries(),
+	// 	c.syncServiceEntry,
+	// 	c.deleteServiceEntry,
+	// )
 
 	c.lazyServiceController = lazyservice.NewController(
 		c.syncLazyService,
 	)
 
-	c.configMapController = discoveryselector.NewController(
-		c.KubeClient,
-		c.updateDiscoverySelector,
-		c.reconcileAllNamespaces,
-	)
+	// c.configMapController = discoveryselector.NewController(
+	// 	c.KubeClient,
+	// 	c.updateDiscoverySelector,
+	// 	c.reconcileAllNamespaces,
+	// )
 
 	return c
 }
@@ -173,10 +175,10 @@ func (c *AggregationController) AddCluster(name string, client *kubernetes.Clien
 // Run ...
 func (c *AggregationController) Run() {
 	go c.virtualServiceController.Run(2, c.stop)
-	go c.sidecarController.Run(2, c.stop)
-	go c.serviceEntryController.Run(2, c.stop)
+	// go c.sidecarController.Run(2, c.stop)
+	// go c.serviceEntryController.Run(2, c.stop)
 	go c.lazyServiceController.Run(4, c.stop)
-	go c.configMapController.Run(c.stop)
+	// go c.configMapController.Run(c.stop)
 
 	c.istioInformer.Start(c.stop)
 }

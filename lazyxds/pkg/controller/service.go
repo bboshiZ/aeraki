@@ -115,9 +115,9 @@ func (c *AggregationController) reconcileService(ctx context.Context, svc *model
 	//}
 
 	// UpdateClusterService global service
-	if err = c.buildPlaceHolderService(ctx); err != nil {
-		return err
-	}
+	// if err = c.buildPlaceHolderService(ctx); err != nil {
+	// 	return err
+	// }
 
 	if err = c.reconcileAllLazyServices(ctx); err != nil { // todo 检查必要性
 		return err

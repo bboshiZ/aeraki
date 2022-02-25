@@ -276,6 +276,14 @@ func (c *AggregationController) removeSidecar(ctx context.Context, svcName, svcN
 	return err
 }
 
+func ClusterIPsID(ips []string, port string) string {
+	var s string
+	for _, ip := range ips {
+		s = s + fmt.Sprintf("|%s:%s", ip, port)
+	}
+
+	return s[1:]
+}
 func httpRouteOfServicePort(svc *model.Service, port string) *networking.HTTPRoute {
 	_, ok := svc.Spec.HTTPPorts[port]
 	if !ok {
@@ -287,10 +295,17 @@ func httpRouteOfServicePort(svc *model.Service, port string) *networking.HTTPRou
 		Match: []*networking.HTTPMatchRequest{
 			{
 				//Gateways: []string{EgressGatewayFullName},
+				// Headers: map[string]*networking.StringMatch{
+				// 	ServiceAddressKey: {
+				// 		MatchType: &networking.StringMatch_Exact{
+				// 			Exact: utils.PortID(svc.ID(), port),
+				// 		},
+				// 	},
+				// },
 				Headers: map[string]*networking.StringMatch{
 					ServiceAddressKey: {
-						MatchType: &networking.StringMatch_Exact{
-							Exact: utils.PortID(svc.ID(), port),
+						MatchType: &networking.StringMatch_Regex{
+							Regex: ClusterIPsID(svc.Spec.ClusterIPs, port),
 						},
 					},
 				},

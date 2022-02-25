@@ -1,0 +1,2 @@
+FROM aeraki/lazyxds:latest
+COPY lazyxds /usr/local/bin/lazyxds

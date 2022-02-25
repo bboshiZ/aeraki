@@ -41,6 +41,7 @@ type Manager struct {
 	conf            *config.Config
 	stop            <-chan struct{} // todo move to args of run function
 	masterClient    *kubernetes.Clientset
+	remoteClients   []*kubernetes.Clientset
 	istioClient     *istioclient.Clientset
 	controller      *controller.AggregationController
 	accessLogServer *accesslog.Server
@@ -64,12 +65,18 @@ func NewManager(conf *config.Config, stop <-chan struct{}) (*Manager, error) {
 		return nil, err
 	}
 
+	remoteClients, err := utils.NewRemoteKubeClient(kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
 	singleton = &Manager{
-		conf:         conf,
-		stop:         stop,
-		masterClient: kubeClient,
-		istioClient:  istioClient,
-		controller:   controller.NewController(istioClient, kubeClient, stop),
+		conf:          conf,
+		stop:          stop,
+		masterClient:  kubeClient,
+		remoteClients: remoteClients,
+		istioClient:   istioClient,
+		controller:    controller.NewController(istioClient, kubeClient, stop),
 	}
 	singleton.accessLogServer = accesslog.NewAccessLogServer(singleton.controller)
 
@@ -89,6 +96,15 @@ func (m *Manager) Run() error {
 	if err := m.AddCluster("Kubernetes", m.masterClient); err != nil {
 		return err
 	}
+
+	for i := range m.remoteClients {
+		name := fmt.Sprintf("remote-%d", i)
+		if err := m.AddCluster(name, m.remoteClients[i]); err != nil {
+			fmt.Printf("add remote cluster failed: %s", err)
+			continue
+		}
+	}
+
 	m.controller.KubeClient = m.masterClient
 
 	return nil
